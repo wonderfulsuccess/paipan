@@ -190,9 +190,9 @@
       }
       .footer-note {
         margin-top: 20px;
-        font-size: clamp(16px, 3.8vw, 20px);
+        font-size: clamp(10px, 3.8vw, 12px);
         color: #6a75a8;
-        text-align: right;
+        text-align: center;
       }
       @media (max-width: 768px) {
         body {
@@ -308,7 +308,9 @@
       </div>
       <div class="pan-panel">
         <div class="pan-grid" id="pan-grid"></div>
-        <div class="footer-note">排盘算法参考传统奇门遁甲时家盘规则</div>
+        <div class="footer-note">
+          排盘算法参考传统奇门遁甲时家盘规则@在洲文化传媒有限公司
+        </div>
       </div>
     </div>
     <script>
@@ -648,7 +650,9 @@
             }
           }
           lunarMonthSelect.innerHTML = months
-            .map((item) => `<option value="${item.value}">${item.label}</option>`)
+            .map(
+              (item) => `<option value="${item.value}">${item.label}</option>`
+            )
             .join("");
           const fallback = lunarMonthSelect.options[0]?.value || "";
           const target = months.some((item) => item.value === preferredValue)
@@ -676,7 +680,9 @@
             items.push({ value: day, label: LUNAR_DAY_NAMES[day - 1] });
           }
           lunarDaySelect.innerHTML = items
-            .map((item) => `<option value="${item.value}">${item.label}</option>`)
+            .map(
+              (item) => `<option value="${item.value}">${item.label}</option>`
+            )
             .join("");
           const fallback = lunarDaySelect.options[0]?.value || "";
           const target =
