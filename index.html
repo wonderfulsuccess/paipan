@@ -70,8 +70,14 @@
         transition: border 0.2s ease;
         /* width: 100%; */
       }
-      input[type="datetime-local"] {
-        max-width: 100%;
+      .lunar-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .lunar-controls select {
+        flex: 1 1 30%;
+        min-width: 0;
       }
       .form-grid label:first-child input {
         /* font-size: clamp(20px, 5vw, 22px); */
@@ -251,8 +257,16 @@
       <h1>在洲时家奇门排盘</h1>
       <div class="form-grid">
         <label
-          >选择日期时间
-          <input type="datetime-local" id="datetime-picker" />
+          >选择农历日期
+          <div class="lunar-controls">
+            <select id="lunar-year"></select>
+            <select id="lunar-month"></select>
+            <select id="lunar-day"></select>
+          </div>
+        </label>
+        <label
+          >选择时刻
+          <input type="time" id="time-picker" step="60" />
         </label>
         <label
           >排盘方式
@@ -541,8 +555,57 @@
           "大雪",
           "冬至",
         ];
+        const LUNAR_MONTH_NAMES = [
+          "正",
+          "二",
+          "三",
+          "四",
+          "五",
+          "六",
+          "七",
+          "八",
+          "九",
+          "十",
+          "冬",
+          "腊",
+        ];
+        const LUNAR_DAY_NAMES = [
+          "初一",
+          "初二",
+          "初三",
+          "初四",
+          "初五",
+          "初六",
+          "初七",
+          "初八",
+          "初九",
+          "初十",
+          "十一",
+          "十二",
+          "十三",
+          "十四",
+          "十五",
+          "十六",
+          "十七",
+          "十八",
+          "十九",
+          "二十",
+          "廿一",
+          "廿二",
+          "廿三",
+          "廿四",
+          "廿五",
+          "廿六",
+          "廿七",
+          "廿八",
+          "廿九",
+          "三十",
+        ];
 
-        const datetimeInput = document.getElementById("datetime-picker");
+        const lunarYearSelect = document.getElementById("lunar-year");
+        const lunarMonthSelect = document.getElementById("lunar-month");
+        const lunarDaySelect = document.getElementById("lunar-day");
+        const timeInput = document.getElementById("time-picker");
         const calcBtn = document.getElementById("calc-btn");
         const resetBtn = document.getElementById("reset-btn");
         const infoGrid = document.getElementById("info-grid");
@@ -552,11 +615,114 @@
           return String(num).padStart(2, "0");
         }
 
-        function initDatetime() {
-          const now = new Date();
-          now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-          datetimeInput.value = now.toISOString().slice(0, 16);
+        function populateYearOptions(selectedYear) {
+          const options = [];
+          for (let year = 1900; year <= 2100; year++) {
+            options.push(`<option value="${year}">${year}年</option>`);
+          }
+          lunarYearSelect.innerHTML = options.join("");
+          if (!selectedYear) return;
+          const target = String(Math.min(2100, Math.max(1900, selectedYear)));
+          if (
+            Array.from(lunarYearSelect.options).some(
+              (option) => option.value === target
+            )
+          ) {
+            lunarYearSelect.value = target;
+          }
         }
+
+        function populateMonthOptions(year, preferredValue) {
+          const leap = leapMonth(year);
+          const months = [];
+          for (let month = 1; month <= 12; month++) {
+            months.push({
+              value: `m-${month}`,
+              label: `${LUNAR_MONTH_NAMES[month - 1]}月`,
+            });
+            if (leap && month === leap) {
+              months.push({
+                value: `l-${month}`,
+                label: `闰${LUNAR_MONTH_NAMES[month - 1]}月`,
+              });
+            }
+          }
+          lunarMonthSelect.innerHTML = months
+            .map((item) => `<option value="${item.value}">${item.label}</option>`)
+            .join("");
+          const fallback = lunarMonthSelect.options[0]?.value || "";
+          const target = months.some((item) => item.value === preferredValue)
+            ? preferredValue
+            : fallback;
+          if (target) {
+            lunarMonthSelect.value = target;
+          }
+        }
+
+        function parseMonthValue(value) {
+          if (!value) return { month: 1, isLeap: false };
+          const [type, raw] = value.split("-");
+          return { month: parseInt(raw, 10), isLeap: type === "l" };
+        }
+
+        function populateDayOptions(year, monthValue, preferredDay) {
+          const { month, isLeap } = parseMonthValue(monthValue);
+          let days = isLeap ? leapDays(year) : monthDays(year, month - 1);
+          if (days <= 0) {
+            days = monthDays(year, month - 1);
+          }
+          const items = [];
+          for (let day = 1; day <= days; day++) {
+            items.push({ value: day, label: LUNAR_DAY_NAMES[day - 1] });
+          }
+          lunarDaySelect.innerHTML = items
+            .map((item) => `<option value="${item.value}">${item.label}</option>`)
+            .join("");
+          const fallback = lunarDaySelect.options[0]?.value || "";
+          const target =
+            preferredDay && preferredDay >= 1 && preferredDay <= days
+              ? String(preferredDay)
+              : fallback;
+          if (target) {
+            lunarDaySelect.value = target;
+          }
+        }
+
+        function getSelectedLunar() {
+          const year = parseInt(lunarYearSelect.value, 10);
+          const { month, isLeap } = parseMonthValue(lunarMonthSelect.value);
+          const day = parseInt(lunarDaySelect.value, 10);
+          return { year, month, day, isLeap: Boolean(isLeap) };
+        }
+
+        function initLunarPicker() {
+          const now = new Date();
+          const lunarNow = solarToLunar(now);
+          populateYearOptions(lunarNow.year);
+          const monthKey = `${lunarNow.isLeap ? "l" : "m"}-${lunarNow.month}`;
+          populateMonthOptions(lunarNow.year, monthKey);
+          populateDayOptions(lunarNow.year, monthKey, lunarNow.day);
+          lunarYearSelect.value = String(lunarNow.year);
+          lunarMonthSelect.value = monthKey;
+          lunarDaySelect.value = String(lunarNow.day);
+          timeInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        }
+
+        lunarYearSelect.addEventListener("change", () => {
+          const year = parseInt(lunarYearSelect.value, 10);
+          if (!Number.isFinite(year)) return;
+          const previousMonth = lunarMonthSelect.value;
+          populateMonthOptions(year, previousMonth);
+          const desiredDay = parseInt(lunarDaySelect.value, 10);
+          populateDayOptions(year, lunarMonthSelect.value, desiredDay);
+        });
+
+        lunarMonthSelect.addEventListener("change", () => {
+          const year = parseInt(lunarYearSelect.value, 10);
+          if (!Number.isFinite(year)) return;
+          const desiredDay = parseInt(lunarDaySelect.value, 10);
+          populateDayOptions(year, lunarMonthSelect.value, desiredDay);
+        });
 
         function getBitInt(data, length, shift) {
           return (data >> shift) & ((1 << length) - 1);
@@ -616,57 +782,33 @@
           return { year, month, day: lunarDay, isLeap };
         }
 
+        function lunarToSolar(lunar, hours = 0, minutes = 0) {
+          let offset = 0;
+          for (let year = 1900; year < lunar.year; year++) {
+            offset += lunarYearDays(year);
+          }
+          const leap = leapMonth(lunar.year);
+          for (let month = 1; month < lunar.month; month++) {
+            offset += monthDays(lunar.year, month - 1);
+            if (leap && month === leap) {
+              offset += leapDays(lunar.year);
+            }
+          }
+          if (lunar.isLeap && leap === lunar.month) {
+            offset += monthDays(lunar.year, lunar.month - 1);
+          }
+          offset += lunar.day - 1;
+          const baseDate = new Date(1900, 0, 31);
+          const result = new Date(baseDate.getTime() + offset * 86400000);
+          result.setHours(hours, minutes, 0, 0);
+          return result;
+        }
+
         function getLunarStr(lunar) {
-          const monthNames = [
-            "正",
-            "二",
-            "三",
-            "四",
-            "五",
-            "六",
-            "七",
-            "八",
-            "九",
-            "十",
-            "冬",
-            "腊",
-          ];
-          const dayNames = [
-            "初一",
-            "初二",
-            "初三",
-            "初四",
-            "初五",
-            "初六",
-            "初七",
-            "初八",
-            "初九",
-            "初十",
-            "十一",
-            "十二",
-            "十三",
-            "十四",
-            "十五",
-            "十六",
-            "十七",
-            "十八",
-            "十九",
-            "二十",
-            "廿一",
-            "廿二",
-            "廿三",
-            "廿四",
-            "廿五",
-            "廿六",
-            "廿七",
-            "廿八",
-            "廿九",
-            "三十",
-          ];
           const monthStr = `${lunar.isLeap ? "闰" : ""}${
-            monthNames[lunar.month - 1]
+            LUNAR_MONTH_NAMES[lunar.month - 1]
           }月`;
-          const dayStr = dayNames[lunar.day - 1];
+          const dayStr = LUNAR_DAY_NAMES[lunar.day - 1];
           return `${heavenlyStems[(lunar.year - 4) % 10]}${
             earthlyBranches[(lunar.year - 4) % 12]
           }年 ${monthStr}${dayStr}`;
@@ -902,26 +1044,39 @@
         }
 
         function calculate() {
-          const value = datetimeInput.value;
-          if (!value) return;
-          const date = new Date(value);
+          const lunar = getSelectedLunar();
+          if (
+            !Number.isFinite(lunar.year) ||
+            !Number.isFinite(lunar.month) ||
+            !Number.isFinite(lunar.day)
+          ) {
+            return;
+          }
+          let hours = 0;
+          let minutes = 0;
+          if (timeInput.value) {
+            const [h, m] = timeInput.value.split(":");
+            hours = parseInt(h, 10) || 0;
+            minutes = parseInt(m, 10) || 0;
+          }
+          const date = lunarToSolar(lunar, hours, minutes);
           const options = buildOptions();
-          const lunar = solarToLunar(date);
+          const lunarInfo = solarToLunar(date);
           const ganzhi = getGanZhi(date);
           const jieqi = calculateJieQi(date);
           const dunInfo = getDunJu(ganzhi, jieqi, options);
           const matrix = createPanMatrix(dunInfo, options, ganzhi);
-          populateInfo(date, lunar, ganzhi, jieqi, dunInfo, options);
+          populateInfo(date, lunarInfo, ganzhi, jieqi, dunInfo, options);
           renderPan(matrix);
         }
 
         calcBtn.addEventListener("click", calculate);
         resetBtn.addEventListener("click", () => {
-          initDatetime();
+          initLunarPicker();
           calculate();
         });
 
-        initDatetime();
+        initLunarPicker();
         calculate();
       })();
     </script>
