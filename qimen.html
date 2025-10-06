@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>在洲时家奇门排盘</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: #f4f6fb;
+      color: #1a1e2e;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      background: radial-gradient(circle at top, #eef2ff, #f4f6fb 45%);
+      min-height: 100vh;
+    }
+    .app {
+      width: min(1080px, 100%);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 16px 40px rgba(41, 67, 135, 0.15);
+      border-radius: 16px;
+      padding: 28px 36px 44px;
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      text-align: center;
+      letter-spacing: 0.3em;
+      color: #2f3b73;
+    }
+    .form-grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px 24px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      font-weight: 600;
+      color: #3d4a7a;
+      gap: 6px;
+    }
+    input,
+    select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d9def7;
+      font-size: 14px;
+      color: #1b2142;
+      background: #f8f9ff;
+      transition: border 0.2s ease;
+    }
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #5665d2;
+      box-shadow: 0 0 0 3px rgba(86, 101, 210, 0.15);
+    }
+    .buttons {
+      margin-top: 12px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #4054d1, #6a7bff);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(78, 105, 218, 0.25);
+    }
+    button.secondary {
+      background: #e6eaff;
+      color: #324182;
+      box-shadow: inset 0 0 0 1px #c8d1ff;
+    }
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .result-panel {
+      margin-top: 28px;
+      background: #fbfcff;
+      border-radius: 14px;
+      border: 1px solid #dfe5ff;
+      padding: 24px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px 24px;
+      font-size: 14px;
+      color: #1c2248;
+    }
+    .info-grid strong {
+      color: #4453a6;
+      font-weight: 700;
+    }
+    .pan-grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .cell {
+      background: #fff;
+      border: 1px solid #d2dafc;
+      border-radius: 10px;
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      gap: 6px;
+      position: relative;
+    }
+    .cell.empty::after {
+      content: "空亡";
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #d75a6a;
+    }
+    .cell-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #6070b5;
+      font-weight: 600;
+    }
+    .cell-main {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      color: #212753;
+      font-weight: 700;
+    }
+    .cell-secondary {
+      display: flex;
+      justify-content: space-between;
+      color: #4c5aa6;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .cell-tertiary {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b77b7;
+    }
+    .footer-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #6a75a8;
+      text-align: right;
+    }
+    @media (max-width: 740px) {
+      .app {
+        padding: 18px;
+      }
+      .pan-grid {
+        gap: 6px;
+      }
+      .cell {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>在洲时家奇门排盘</h1>
+    <div class="form-grid">
+      <label>选择日期时间
+        <input type="datetime-local" id="datetime-picker" />
+      </label>
+      <label>排盘方式
+        <select id="plate-type">
+          <option value="zhuan" selected>转盘</option>
+          <option value="fei">飞盘</option>
+        </select>
+      </label>
+      <label>定局方法
+        <select id="dingju">
+          <option value="chaibu" selected>拆补法</option>
+          <option value="zhirun">置闰法</option>
+          <option value="maoshan">茅山道人法</option>
+        </select>
+      </label>
+      <label>标记旬空
+        <select id="xunkong">
+          <option value="hour" selected>时空</option>
+          <option value="day">日空</option>
+        </select>
+      </label>
+      <label>中宫寄宫
+        <select id="jigong">
+          <option value="kun" selected>寄坤二宫</option>
+          <option value="gen">寄艮八宫</option>
+          <option value="none">不寄宫</option>
+        </select>
+      </label>
+    </div>
+    <div class="buttons">
+      <button class="primary" id="calc-btn">点击起局</button>
+      <button class="secondary" id="reset-btn">重置时间</button>
+    </div>
+    <div class="result-panel" id="result-panel">
+      <div class="info-grid" id="info-grid"></div>
+      <div class="pan-grid" id="pan-grid"></div>
+      <div class="footer-note">排盘算法参考传统奇门遁甲时家盘规则</div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const heavenlyStems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+      const earthlyBranches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+      const jiaZi = (() => {
+        const arr = [];
+        for (let i = 0; i < 60; i++) {
+          arr.push(heavenlyStems[i % 10] + earthlyBranches[i % 12]);
+        }
+        return arr;
+      })();
+      const xunHeads = ["甲子", "甲戌", "甲申", "甲午", "甲辰", "甲寅"];
+      const xunKongTable = [
+        ["戌", "亥"],
+        ["申", "酉"],
+        ["午", "未"],
+        ["辰", "巳"],
+        ["寅", "卯"],
+        ["子", "丑"]
+      ];
+      const dunRules = {
+        yangTerms: new Set([22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        baseJu: {
+          // Major solar terms -> base Ju index
+          0: 1, // 小寒
+          1: 2,
+          2: 3,
+          3: 4,
+          4: 5,
+          5: 6,
+          6: 7,
+          7: 8,
+          8: 9,
+          9: 1,
+          10: 2,
+          11: 3,
+          12: 4,
+          13: 5,
+          14: 6,
+          15: 7,
+          16: 8,
+          17: 9,
+          18: 1,
+          19: 2,
+          20: 3,
+          21: 4,
+          22: 5,
+          23: 6
+        }
+      };
+      const palaces = [
+        { name: "坎一", palace: "坎" },
+        { name: "坤二", palace: "坤" },
+        { name: "震三", palace: "震" },
+        { name: "巽四", palace: "巽" },
+        { name: "中五", palace: "中" },
+        { name: "乾六", palace: "乾" },
+        { name: "兑七", palace: "兑" },
+        { name: "艮八", palace: "艮" },
+        { name: "离九", palace: "离" }
+      ];
+      const deitySequence = {
+        yang: ["值符", "腾蛇", "太阴", "六合", "白虎", "玄武", "九地", "九天", "值使"],
+        yin: ["值符", "九天", "九地", "玄武", "白虎", "六合", "太阴", "腾蛇", "值使"]
+      };
+      const starSequence = {
+        yang: ["天蓬", "天任", "天冲", "天辅", "天英", "天芮", "天柱", "天心", "天禽"],
+        yin: ["天蓬", "天任", "天冲", "天辅", "天英", "天芮", "天柱", "天心", "天禽"].reverse()
+      };
+      const doorSequence = {
+        yang: ["休门", "生门", "伤门", "杜门", "景门", "死门", "惊门", "开门", "值符"],
+        yin: ["休门", "生门", "伤门", "杜门", "景门", "死门", "惊门", "开门", "值符"].reverse()
+      };
+      const heavenStemBoard = {
+        yang: ["壬", "戊", "庚", "丙", "乙", "丁", "己", "辛", "癸"],
+        yin: ["壬", "癸", "辛", "己", "丁", "乙", "丙", "庚", "戊"]
+      };
+      const earthStemBoard = ["壬", "辛", "庚", "己", "戊", "丁", "丙", "乙", "甲"];
+      const hiddenStemMatrix = {
+        坎: ["癸", "戊", "己"],
+        坤: ["乙", "癸", "丁"],
+        震: ["庚", "丙", "戊"],
+        巽: ["辛", "乙", "丙"],
+        中: ["戊", "己", "庚"],
+        乾: ["壬", "己", "庚"],
+        兑: ["辛", "丁", "癸"],
+        艮: ["丙", "戊", "壬"],
+        离: ["丁", "己", "辛"],
+        default: ["庚", "辛", "壬"]
+      };
+      const sTermInfo = [
+        0, 21208, 42467, 63836, 85337, 107014, 128867, 150921,
+        173149, 195551, 218072, 240693, 263343, 285989, 308563,
+        331033, 353350, 375494, 397447, 419210, 440795, 462224,
+        483532, 504758
+      ];
+
+      /**
+       * Lunar calendar helper based on传统表法，覆盖1900-2100年。
+       */
+      const LUNAR_INFO = [
+        0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0,
+        0x09ad0, 0x055d2, 0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540,
+        0x0d6a0, 0x0ada2, 0x095b0, 0x14977, 0x04970, 0x0a4b0, 0x0b4b5, 0x06a50,
+        0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970, 0x06566, 0x0d4a0,
+        0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+        0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2,
+        0x0a950, 0x0b557, 0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5d0, 0x14573,
+        0x052d0, 0x0a9a8, 0x0e950, 0x06aa0, 0x0aea6, 0x0ab50, 0x04b60, 0x0aae4,
+        0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, 0x096d0, 0x04dd5,
+        0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6,
+        0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46,
+        0x0ab60, 0x09570, 0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58,
+        0x05ac0, 0x0ab60, 0x096d5, 0x092e0, 0x0c960, 0x0d954, 0x0d4a0, 0x0da50,
+        0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5, 0x0a950, 0x0b4a0,
+        0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+        0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260,
+        0x0ea65, 0x0d530, 0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0,
+        0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, 0x0b5a0, 0x056d0, 0x055b2, 0x049b0,
+        0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0, 0x14b63
+      ];
+
+      const termNames = [
+        "小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨",
+        "立夏", "小满", "芒种", "夏至", "小暑", "大暑", "立秋", "处暑",
+        "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"
+      ];
+
+      const datetimeInput = document.getElementById("datetime-picker");
+      const calcBtn = document.getElementById("calc-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const infoGrid = document.getElementById("info-grid");
+      const panGrid = document.getElementById("pan-grid");
+
+      function pad(num) {
+        return String(num).padStart(2, "0");
+      }
+
+      function initDatetime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        datetimeInput.value = now.toISOString().slice(0, 16);
+      }
+
+      function getBitInt(data, length, shift) {
+        return (data >> shift) & ((1 << length) - 1);
+      }
+
+      function lunarYearDays(year) {
+        let sum = 348;
+        const info = LUNAR_INFO[year - 1900];
+        for (let i = 0x8000; i > 0x8; i >>= 1) {
+          sum += (info & i) ? 1 : 0;
+        }
+        return sum + leapDays(year);
+      }
+
+      function leapMonth(year) {
+        return getBitInt(LUNAR_INFO[year - 1900], 4, 0);
+      }
+
+      function leapDays(year) {
+        if (leapMonth(year)) {
+          return (LUNAR_INFO[year - 1900] & 0x10000) ? 30 : 29;
+        }
+        return 0;
+      }
+
+      function monthDays(year, month) {
+        return (LUNAR_INFO[year - 1900] & (0x10000 >> month)) ? 30 : 29;
+      }
+
+      function solarToLunar(date) {
+        const baseDate = new Date(1900, 0, 31);
+        let offset = Math.floor((date - baseDate) / 86400000);
+        let year = 1900;
+        while (year < 2101 && offset > 0) {
+          const days = lunarYearDays(year);
+          if (offset < days) break;
+          offset -= days;
+          year += 1;
+        }
+        let month = 1;
+        let isLeap = false;
+        const leap = leapMonth(year);
+        while (month <= 12 && offset >= 0) {
+          const mdays = isLeap ? leapDays(year) : monthDays(year, month - 1);
+          if (offset < mdays) break;
+          offset -= mdays;
+          if (leap && month === leap + 1 && !isLeap) {
+            isLeap = true;
+          } else {
+            if (isLeap) {
+              isLeap = false;
+            }
+            month += 1;
+          }
+        }
+        const lunarDay = offset + 1;
+        return { year, month, day: lunarDay, isLeap };
+      }
+
+      function getLunarStr(lunar) {
+        const monthNames = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"];
+        const dayNames = [
+          "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+          "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+          "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"
+        ];
+        const monthStr = `${lunar.isLeap ? "闰" : ""}${monthNames[lunar.month - 1]}月`;
+        const dayStr = dayNames[lunar.day - 1];
+        return `${heavenlyStems[(lunar.year - 4) % 10]}${earthlyBranches[(lunar.year - 4) % 12]}年 ${monthStr}${dayStr}`;
+      }
+
+      // 计算节气时间，使用寿星万年历算法常量换算为UTC毫秒
+      function getSolarTermTime(year, index) {
+        const base = Date.UTC(1900, 0, 6, 2, 5);
+        const offset = (31556925974.7 * (year - 1900) + sTermInfo[index] * 60000);
+        return new Date(base + offset);
+      }
+
+      // 根据当前公历时间定位前后节气并推断阴阳遁、基础局数
+      function calculateJieQi(date) {
+        const year = date.getFullYear();
+        let prev = null;
+        let next = null;
+        for (let i = 0; i < 24; i++) {
+          const termDate = getSolarTermTime(year, i);
+          if (date >= termDate) {
+            prev = { name: termNames[i], date: termDate, index: i };
+          } else if (!next) {
+            next = { name: termNames[i], date: termDate, index: i };
+          }
+        }
+        if (!prev) {
+          const lastYearTerm = getSolarTermTime(year - 1, 23);
+          prev = { name: termNames[23], date: lastYearTerm, index: 23 };
+        }
+        if (!next) {
+          const nextTermDate = getSolarTermTime(year + 1, 0);
+          next = { name: termNames[0], date: nextTermDate, index: 0 };
+        }
+        const dunType = dunRules.yangTerms.has(prev.index) ? "阳遁" : "阴遁";
+        const baseJu = dunRules.baseJu[prev.index] || 1;
+        return { prev, next, dunType, baseJu };
+      }
+
+      // 推算四柱干支，日干支使用甲子日序，时柱按日干配时
+      function getGanZhi(date) {
+        const y = date.getFullYear();
+        const m = date.getMonth() + 1;
+        const d = date.getDate();
+        const hour = date.getHours();
+        const dayCount = Math.floor((date - new Date(1899, 11, 21, 0, 0, 0)) / 86400000);
+        const dayIndex = (dayCount + 60) % 60;
+        const dayGan = heavenlyStems[dayIndex % 10];
+        const dayZhi = earthlyBranches[dayIndex % 12];
+        const yearIndex = (y - 4) % 60;
+        const monthIndex = ((y - 1900) * 12 + m + 12) % 60;
+        const hourIndex = (dayIndex % 10) * 12 + Math.floor((hour + 1) / 2);
+        const hourGan = heavenlyStems[(dayIndex % 10 * 2 + Math.floor((hour + 1) / 2)) % 10];
+        const hourZhi = earthlyBranches[Math.floor((hour + 1) / 2) % 12];
+        return {
+          year: jiaZi[yearIndex],
+          month: jiaZi[monthIndex % 60],
+          day: jiaZi[dayIndex],
+          hour: heavenlyStems[hourIndex % 10] + hourZhi,
+          indices: { dayIndex, hourIndex: Math.floor((hour + 1) / 2) % 12 }
+        };
+      }
+
+      // 结合节气基础局数与当日、当时索引推得具体起局
+      // 依据定局法不同对基础局进行修正
+      function getDunJu(ganzhiInfo, jieqi, options) {
+        const dayIndex = ganzhiInfo.indices.dayIndex;
+        const hourIndex = ganzhiInfo.indices.hourIndex;
+        const dun = jieqi.dunType;
+        const dayMod = dayIndex % 9;
+        let shift = dayMod;
+        if (options.dingju === "zhirun") {
+          shift = (dayMod + 1) % 9; // 置闰法：逢闰局顺推一宫
+        } else if (options.dingju === "maoshan") {
+          shift = (dayMod + 6) % 9; // 茅山法：按传承加六求局
+        }
+        // 茅山法以半时辰换算，其他方法按原时辰索引
+        const hourShift = options.dingju === "maoshan" ? Math.floor(hourIndex / 2) : hourIndex;
+        const raw = (jieqi.baseJu + shift + hourShift) % 9;
+        const ju = raw === 0 ? 9 : raw;
+        return { dun, ju };
+      }
+
+      function getXunKongLabel(ganzhiInfo, mode) {
+        const index = mode === "hour" ? Math.floor(ganzhiInfo.indices.hourIndex / 2) : Math.floor(ganzhiInfo.indices.dayIndex / 10);
+        const pair = xunKongTable[index % xunKongTable.length];
+        return pair.join("、");
+      }
+
+      function rotateSequence(seq, offset, reverse = false) {
+        const data = seq.slice();
+        if (reverse) data.reverse();
+        const len = data.length;
+        const shift = ((offset % len) + len) % len;
+        return data.map((_, idx) => data[(idx + shift) % len]);
+      }
+
+      // 核心排盘：组合神、星、门与天地干，按寄宫与旬空标记九宫
+      function createPanMatrix(dunInfo, options, ganzhiInfo) {
+        const { dun, ju } = dunInfo;
+        const offset = ju - 1;
+        const seqKey = dun === "阳遁" ? "yang" : "yin";
+        const deities = rotateSequence(deitySequence[seqKey], offset);
+        const stars = rotateSequence(starSequence[seqKey], offset);
+        const doors = rotateSequence(doorSequence[seqKey], offset, options.plate === "fei");
+        const heavenBoard = rotateSequence(heavenStemBoard[seqKey], offset, options.plate === "fei");
+        const xunkongSet = new Set(getXunKongLabel(ganzhiInfo, options.xunkong === "hour" ? "hour" : "day").split("、"));
+        return palaces.map((palace, idx) => {
+          const earthStem = earthStemBoard[idx];
+          const hidden = hiddenStemMatrix[palace.palace] || hiddenStemMatrix.default;
+          const isEmpty = xunkongSet.has(earthStem) || xunkongSet.has(hidden[0]);
+          const middle = options.jigong === "kun" && palace.palace === "中" ? hiddenStemMatrix["坤"]
+            : options.jigong === "gen" && palace.palace === "中" ? hiddenStemMatrix["艮"]
+            : hidden;
+          return {
+            palace: palace.name,
+            deity: deities[idx],
+            star: stars[idx],
+            door: doors[idx],
+            heavenStem: heavenBoard[idx],
+            earthStem,
+            hidden: middle,
+            isEmpty
+          };
+        });
+      }
+
+      // 汇总排盘背景信息，填充顶部信息面板
+      function populateInfo(date, lunar, ganzhi, jieqi, dunInfo, options) {
+        const xunIndex = Math.floor(ganzhi.indices.dayIndex / 10);
+        const xunshou = xunHeads[xunIndex];
+        const infoItems = [
+          { label: "阳历", value: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}` },
+          { label: "阴历", value: getLunarStr(lunar) },
+          { label: "四柱", value: `${ganzhi.year}年 ${ganzhi.month}月 ${ganzhi.day}日 ${ganzhi.hour}时` },
+          { label: "选局", value: `${dunInfo.dun}${dunInfo.ju}局` },
+          { label: "旬首", value: xunshou },
+          { label: "值符", value: dunInfo.dun === "阳遁" ? "天乙" : "天禽" },
+          { label: "值使", value: dunInfo.dun === "阳遁" ? "开门" : "休门" },
+          {
+            label: "节气",
+            value: `${jieqi.prev.name} (${jieqi.prev.date.getMonth() + 1}-${jieqi.prev.date.getDate()}) → ${jieqi.next.name}`
+          },
+          {
+            label: "旬空",
+            value: getXunKongLabel(ganzhi, options.xunkong === "hour" ? "hour" : "day")
+          }
+        ];
+        infoGrid.innerHTML = infoItems
+          .map((item) => `<div><strong>${item.label}</strong><br>${item.value}</div>`)
+          .join("");
+      }
+
+      function renderPan(matrix) {
+        panGrid.innerHTML = matrix
+          .map((cell) => `
+            <div class="cell${cell.isEmpty ? " empty" : ""}">
+              <div class="cell-header">
+                <span>${cell.palace}</span>
+                <span>${cell.deity}</span>
+              </div>
+              <div class="cell-main">
+                <span>${cell.star}</span>
+                <span>${cell.door}</span>
+              </div>
+              <div class="cell-secondary">
+                <span>${cell.heavenStem}</span>
+                <span>${cell.earthStem}</span>
+              </div>
+              <div class="cell-tertiary">
+                <span>${cell.hidden.join(" ")}</span>
+                <span></span>
+              </div>
+            </div>
+          `)
+          .join("");
+      }
+
+      function buildOptions() {
+        return {
+          plate: document.getElementById("plate-type").value,
+          dingju: document.getElementById("dingju").value,
+          xunkong: document.getElementById("xunkong").value,
+          jigong: document.getElementById("jigong").value
+        };
+      }
+
+      function calculate() {
+        const value = datetimeInput.value;
+        if (!value) return;
+        const date = new Date(value);
+        const options = buildOptions();
+        const lunar = solarToLunar(date);
+        const ganzhi = getGanZhi(date);
+        const jieqi = calculateJieQi(date);
+        const dunInfo = getDunJu(ganzhi, jieqi, options);
+        const matrix = createPanMatrix(dunInfo, options, ganzhi);
+        populateInfo(date, lunar, ganzhi, jieqi, dunInfo, options);
+        renderPan(matrix);
+      }
+
+      calcBtn.addEventListener("click", calculate);
+      resetBtn.addEventListener("click", () => {
+        initDatetime();
+        calculate();
+      });
+
+      initDatetime();
+      calculate();
+    })();
+  </script>
+</body>
+</html>
