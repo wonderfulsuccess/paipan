@@ -47,32 +47,36 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 16px 24px;
       }
-      .form-grid label:first-child {
-        /* grid-column: 1 / -1; */
-      }
-      label {
-        display: flex;
-        flex-direction: column;
-        font-size: clamp(16px, 4vw, 20px);
-        font-weight: 600;
-        color: #3d4a7a;
-        gap: 8px;
-      }
-      input,
-      select {
-        padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid #d9def7;
-        font-size: clamp(16px, 4vw, 20px);
-        color: #1b2142;
-        background: #f8f9ff;
-        transition: border 0.2s ease;
-        width: 100%;
-      }
-      .form-grid label:first-child input {
-        font-size: clamp(20px, 4.8vw, 24px);
-        padding: 14px 18px;
-      }
+    .form-grid label:first-child {
+      grid-column: 1 / -1;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: 600;
+      color: #3d4a7a;
+      gap: 8px;
+      min-width: 0;
+    }
+    input,
+    select {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #d9def7;
+      font-size: clamp(16px, 4vw, 20px);
+      color: #1b2142;
+      background: #f8f9ff;
+      transition: border 0.2s ease;
+      width: 100%;
+    }
+    input[type="datetime-local"] {
+      max-width: 100%;
+    }
+    .form-grid label:first-child input {
+      font-size: clamp(20px, 5vw, 22px);
+      padding: 14px 16px;
+    }
       input:focus,
       select:focus {
         outline: none;
@@ -218,13 +222,17 @@
         }
         .info-grid {
           grid-template-columns: 1fr;
-        }
-        .buttons {
-          gap: 10px;
-        }
-        .cell {
-          padding: 12px;
-        }
+      }
+      .buttons {
+        gap: 10px;
+      }
+      .form-grid label:first-child input {
+        font-size: 18px;
+        padding: 12px 14px;
+      }
+      .cell {
+        padding: 12px;
+      }
         .cell-header {
           font-size: 20px;
         }
