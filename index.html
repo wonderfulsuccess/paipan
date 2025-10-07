@@ -671,9 +671,9 @@
 
         function populateDayOptions(year, monthValue, preferredDay) {
           const { month, isLeap } = parseMonthValue(monthValue);
-          let days = isLeap ? leapDays(year) : monthDays(year, month - 1);
+          let days = isLeap ? leapDays(year) : monthDays(year, month);
           if (days <= 0) {
-            days = monthDays(year, month - 1);
+            days = monthDays(year, month);
           }
           const items = [];
           for (let day = 1; day <= days; day++) {
@@ -755,32 +755,46 @@
         }
 
         function monthDays(year, month) {
+          if (month < 1 || month > 12) return 29;
           return LUNAR_INFO[year - 1900] & (0x10000 >> month) ? 30 : 29;
         }
 
         function solarToLunar(date) {
-          const baseDate = new Date(1900, 0, 31);
-          let offset = Math.floor((date - baseDate) / 86400000);
+          const baseTimestamp = Date.UTC(1900, 0, 31);
+          const currentTimestamp = Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+          );
+          let offset = Math.floor(
+            (currentTimestamp - baseTimestamp) / 86400000
+          );
           let year = 1900;
-          while (year < 2101 && offset > 0) {
-            const days = lunarYearDays(year);
-            if (offset < days) break;
-            offset -= days;
+          while (year < 2101 && offset >= 0) {
+            const yearDays = lunarYearDays(year);
+            if (offset < yearDays) {
+              break;
+            }
+            offset -= yearDays;
             year += 1;
           }
           let month = 1;
           let isLeap = false;
           const leap = leapMonth(year);
           while (month <= 12 && offset >= 0) {
-            const mdays = isLeap ? leapDays(year) : monthDays(year, month - 1);
-            if (offset < mdays) break;
-            offset -= mdays;
-            if (leap && month === leap + 1 && !isLeap) {
+            const monthDayCount = isLeap
+              ? leapDays(year)
+              : monthDays(year, month);
+            if (offset < monthDayCount) {
+              break;
+            }
+            offset -= monthDayCount;
+            if (isLeap && month === leap) {
+              isLeap = false;
+              month += 1;
+            } else if (leap && month === leap && !isLeap) {
               isLeap = true;
             } else {
-              if (isLeap) {
-                isLeap = false;
-              }
               month += 1;
             }
           }
@@ -795,17 +809,17 @@
           }
           const leap = leapMonth(lunar.year);
           for (let month = 1; month < lunar.month; month++) {
-            offset += monthDays(lunar.year, month - 1);
+            offset += monthDays(lunar.year, month);
             if (leap && month === leap) {
               offset += leapDays(lunar.year);
             }
           }
           if (lunar.isLeap && leap === lunar.month) {
-            offset += monthDays(lunar.year, lunar.month - 1);
+            offset += monthDays(lunar.year, lunar.month);
           }
           offset += lunar.day - 1;
-          const baseDate = new Date(1900, 0, 31);
-          const result = new Date(baseDate.getTime() + offset * 86400000);
+          const baseTimestamp = Date.UTC(1900, 0, 31);
+          const result = new Date(baseTimestamp + offset * 86400000);
           result.setHours(hours, minutes, 0, 0);
           return result;
         }
@@ -984,6 +998,14 @@
             },
             { label: "阴历", value: getLunarStr(lunar) },
             {
+              label: "节气",
+              value: `${jieqi.prev.name} (${
+                jieqi.prev.date.getMonth() + 1
+              }-${jieqi.prev.date.getDate()}) → ${jieqi.next.name} (${
+                jieqi.next.date.getMonth() + 1
+              }-${jieqi.next.date.getDate()})`,
+            },
+            {
               label: "四柱",
               value: `${ganzhi.year}年 ${ganzhi.month}月 ${ganzhi.day}日 ${ganzhi.hour}时`,
             },
@@ -991,12 +1013,7 @@
             { label: "旬首", value: xunshou },
             { label: "值符", value: dunInfo.dun === "阳遁" ? "天乙" : "天禽" },
             { label: "值使", value: dunInfo.dun === "阳遁" ? "开门" : "休门" },
-            {
-              label: "节气",
-              value: `${jieqi.prev.name} (${
-                jieqi.prev.date.getMonth() + 1
-              }-${jieqi.prev.date.getDate()}) → ${jieqi.next.name}`,
-            },
+
             {
               label: "旬空",
               value: getXunKongLabel(
